@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#Start redis server on 22122
-redis-server --port 22122 &
+#Start redis server on 6379
+redis-server --port 6379 &
 
-src/dynomite --conf-file=conf/redis_single.yml -v5
+src/dynomite --conf-file=/etc/dynomite.yml -v11

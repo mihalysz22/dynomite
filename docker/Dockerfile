@@ -36,10 +36,10 @@ RUN apt-get update && \
 	libtool \
 	software-properties-common \
 	redis-server \
-	tcl8.5 
+	tcl
 
 # Clone the Dynomite Git
-RUN git clone https://github.com/Netflix/dynomite.git
+RUN git clone https://github.com/mihalysz22/dynomite.git
 RUN echo 'Git repo has been cloned in your Docker VM'
 
 RUN echo 'copy file'
@@ -48,6 +48,7 @@ RUN echo 'done copying file'
 
 # Move to working directory
 WORKDIR dynomite/
+RUN git checkout zdev
 
 # Autoreconf
 RUN autoreconf -fvi \
@@ -63,8 +64,8 @@ RUN echo 'Exposing peer port 8101'
 EXPOSE 8101
 
 # Expose the underlying Redis port
-RUN echo 'Exposing Redis port 22122'
-EXPOSE 22122
+RUN echo 'Exposing Redis port 6379'
+EXPOSE 6379
 
 # Expose the stats/admin port
 RUN echo 'Exposing stats/admin port 22222'
@@ -74,9 +75,11 @@ EXPOSE 22222
 RUN echo 'Exposing client port for Dynomite 8102'
 EXPOSE 8102
 
-
 # Setting overcommit for Redis to be able to do BGSAVE/BGREWRITEAOF
-RUN sysctl vm.overcommit_memory=1
+# RUN sysctl vm.overcommit_memory=1
+
+ARG DYNOMITE_DNS_NAME
+ARG DYNOMITE_DNS_TYPE
 
 # Set the entry-point to be the startup script
 ENTRYPOINT ["/dynomite/startup.sh"]
