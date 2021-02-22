@@ -48,7 +48,7 @@ RUN echo 'done copying file'
 
 # Move to working directory
 WORKDIR dynomite/
-RUN git checkout zdev
+RUN git checkout xzdev
 
 # Autoreconf
 RUN autoreconf -fvi \

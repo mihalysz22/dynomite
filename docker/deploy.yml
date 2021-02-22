@@ -1,0 +1,83 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dynomite-config
+  namespace: default
+data:
+  dynomite.yml: |
+dyn_o_mite:
+ datacenter: fra
+ rack: fr04a
+ dyn_listen: 0.0.0.0:8101
+ dyn_seed_provider: dns_provider
+ listen: 0.0.0.0:8102
+ servers:
+  - 127.0.0.1:6379:1
+ tokens: '0'
+ data_store: 0
+ stats_listen: 0.0.0.0:22222
+ preconnect: true
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: dynomite-seed
+  annotations:
+    service.kubernetes.io/ibm-load-balancer-cloud-provider-ip-type: "public"
+    service.kubernetes.io/ibm-load-balancer-cloud-provider-enable-features: "ipvs"
+spec:
+  type: LoadBalancer
+  selector:
+      app: dynomite
+  ports:
+  - name: peer
+    protocol: TCP
+    port: 8101
+  externalTrafficPolicy: Local
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: default
+  name: dynomite
+  labels:
+    app: dynomite
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dynomite
+  template:
+    metadata:
+      labels:
+        app: dynomite
+    spec:
+      containers:
+        - name: dynomite
+          image: ghcr.io/mihalysz22/dynomite:latest
+          imagePullPolicy: Always
+          command: ["/dynomite/startup.sh"]
+          args: [""]
+          env:
+            - name: DYNOMITE_DNS_NAME
+              value: "dynomite-seed"
+            - name: DYNOMITE_DNS_TYPE
+              value: "A"
+            - name: LOG_LEVEL
+              value: "debug"
+          ports:
+            - name: peer
+              containerPort: 8101
+              protocol: TCP
+            - name: client
+              containerPort: 8102
+              protocol: TCP
+          volumeMounts:
+            - name: dynomite-yml
+              mountPath: /etc/dynomite.yml
+              subPath: dynomite.yml
+      volumes:
+        - name: dynomite-yml
+          configMap:
+            name: dynomite-yml
